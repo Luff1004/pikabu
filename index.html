@@ -105,7 +105,7 @@ button:disabled{opacity:.4;cursor:not-allowed;}
   </div>
 
   <div class="screen" id="screen-mole">
-    <div class="hud"><span>스테이지 3 · 준혁잡기</span><span>남은시간 <span id="moleTimer">15.0</span>초</span></div>
+    <div class="hud"><span>스테이지 3 · 준혁잡기</span><span>남은시간 <span id="moleTimer">19.0</span>초</span></div>
     <h2>목표: 준혁이 15마리 잡기!<br><span class="small">진짜 준혁이만 클릭 · 가짜(❌ 빨간배경)를 누르면 감점</span></h2>
     <div style="font-size:2.2rem;font-weight:900;margin:6px 0 16px;" id="moleScoreBig">0 / 15</div>
     <div id="moleGrid"></div>
@@ -481,9 +481,9 @@ function dashLoop(){
 let moleInterval, moleTimeLeft, moleScore, moleRunning, moleHoles;
 function startMole(){
   show('screen-mole');
-  moleScore = 0; moleTimeLeft = 15.0; moleRunning = true;
+  moleScore = 0; moleTimeLeft = 19.0; moleRunning = true;
   document.getElementById('moleScoreBig').textContent = '0 / 15';
-  document.getElementById('moleTimer').textContent = '15.0';
+  document.getElementById('moleTimer').textContent = '19.0';
   const grid = document.getElementById('moleGrid');
   grid.innerHTML='';
   moleHoles = [];
