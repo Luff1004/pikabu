@@ -51,7 +51,12 @@ button:disabled{opacity:.4;cursor:not-allowed;}
 @keyframes jumpin{from{transform:scale(0.2) rotate(-15deg);opacity:0}to{transform:scale(1) rotate(0);opacity:1}}
 #timerOverlay{position:fixed;inset:0;background:#000;z-index:998;display:none;align-items:center;justify-content:center;flex-direction:column;}
 #timerOverlay.active{display:flex;}
-#timerOverlay img{width:60vw;max-width:520px;border-radius:20px;box-shadow:0 0 60px var(--accent);animation:pulse 1s infinite;}
+#timerOverlay .timerImgWrap{position:relative;display:inline-block;width:60vw;max-width:520px;}
+#timerOverlay img{width:100%;display:block;border-radius:20px;box-shadow:0 0 60px var(--accent);animation:pulse 1s infinite;}
+#timerOverlay .hotspot{position:absolute;transform:translate(-50%,-50%);border-radius:50%;background:transparent;cursor:pointer;}
+#hsLeftEye{left:34%;top:56%;width:17%;height:17%;}
+#hsRightEye{left:66%;top:56%;width:17%;height:17%;}
+#hsNose{left:50%;top:75%;width:15%;height:16%;}
 @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
 #timerOverlay .clock{font-size:3rem;font-weight:900;color:var(--accent);margin-top:20px;text-shadow:0 0 20px var(--accent);}
 #timerOverlay .msg{color:#fff;margin-top:10px;font-size:1.2rem;text-align:center;}
@@ -141,7 +146,12 @@ button:disabled{opacity:.4;cursor:not-allowed;}
 </div>
 
 <div id="timerOverlay">
-  <img src="" id="timerImg" alt="">
+  <div class="timerImgWrap">
+    <img src="" id="timerImg" alt="">
+    <div class="hotspot" id="hsLeftEye"></div>
+    <div class="hotspot" id="hsRightEye"></div>
+    <div class="hotspot" id="hsNose"></div>
+  </div>
   <div class="clock" id="timerClock">3:00</div>
   <div class="msg">벌칙 타임! 준혁이가 사라질 때까지 기다리세요...</div>
 </div>
@@ -176,6 +186,7 @@ function jumpscare(afterMs, cb){
   setTimeout(()=>{ el.classList.remove('active'); if(cb) cb(); }, afterMs);
 }
 
+let penaltyEscape = null;
 function penaltyTimer3min(cb){
   const el = document.getElementById('timerOverlay');
   document.getElementById('timerImg').src = IMG_MAIN;
@@ -188,12 +199,55 @@ function penaltyTimer3min(cb){
     secs--;
     clock.textContent = fmt(secs);
     if(secs<=0){
-      clearInterval(iv);
-      el.classList.remove('active');
-      if(cb) cb();
+      finish();
     }
   },1000);
+  function finish(){
+    clearInterval(iv);
+    penaltyEscape = null;
+    el.classList.remove('active');
+    if(cb) cb();
+  }
+  penaltyEscape = finish;
+  cheatNoseCount = 0; cheatComboCount = 0; cheatLastLeft = 0; cheatLastRight = 0;
 }
+
+/* 벌칙 해독법: 모바일은 양쪽 안경알 동시클릭 10번, PC는 코 클릭 15번 (리스너는 한 번만 등록) */
+let cheatNoseCount = 0, cheatComboCount = 0, cheatLastLeft = 0, cheatLastRight = 0;
+function doPenaltyEscape(){
+  if(penaltyEscape){
+    const fn = penaltyEscape;
+    penaltyEscape = null;
+    fn();
+  }
+}
+(function setupPenaltyCheatListeners(){
+  const nose = document.getElementById('hsNose');
+  const leftEye = document.getElementById('hsLeftEye');
+  const rightEye = document.getElementById('hsRightEye');
+  nose.addEventListener('click', ()=>{
+    if(!penaltyEscape) return;
+    cheatNoseCount++;
+    if(cheatNoseCount >= 15) doPenaltyEscape();
+  });
+  function tryCombo(){
+    if(Math.abs(cheatLastLeft - cheatLastRight) < 350 && cheatLastLeft && cheatLastRight){
+      cheatComboCount++;
+      cheatLastLeft = 0; cheatLastRight = 0;
+      if(cheatComboCount >= 10) doPenaltyEscape();
+    }
+  }
+  leftEye.addEventListener('touchstart', (e)=>{
+    if(!penaltyEscape) return;
+    if(e.cancelable) e.preventDefault();
+    cheatLastLeft = Date.now(); tryCombo();
+  });
+  rightEye.addEventListener('touchstart', (e)=>{
+    if(!penaltyEscape) return;
+    if(e.cancelable) e.preventDefault();
+    cheatLastRight = Date.now(); tryCombo();
+  });
+})();
 
 /* ---------------- 로비 ---------------- */
 const STAGE_NAMES = ["퀴즈","준혁런","준혁잡기","다른 준혁 찾기","준혁 폭우"];
