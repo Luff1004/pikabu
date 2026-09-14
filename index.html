@@ -72,8 +72,9 @@ button:disabled{opacity:.4;cursor:not-allowed;}
 .hole{aspect-ratio:1;background:#2a2f3d;border-radius:50%;display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;position:relative;}
 .hole img{width:100%;height:100%;object-fit:cover;border-radius:50%;transform:translateY(100%);transition:transform .15s;}
 .hole.up img{transform:translateY(0);}
+.hole.up.decoy img{display:none;}
 .hole .decoyFace{position:absolute;inset:0;border-radius:50%;background:#c0392b;display:flex;align-items:center;justify-content:center;font-size:2rem;transform:translateY(100%);transition:transform .15s;}
-.hole.up .decoyFace{transform:translateY(0);}
+.hole.up.decoy .decoyFace{transform:translateY(0);}
 #rainCanvas{display:block;width:min(800px,92vw);height:auto;max-height:62vh;}
 .small{font-size:.85rem;color:var(--muted);}
 .centerText{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:2rem;font-weight:900;pointer-events:none;}
@@ -506,11 +507,12 @@ function startMole(){
 function stopMole(){ moleRunning=false; clearInterval(moleInterval); }
 function popMole(){
   if(!moleRunning) return;
-  moleHoles.forEach(h=>{ h.classList.remove('up'); });
+  moleHoles.forEach(h=>{ h.classList.remove('up'); h.classList.remove('decoy'); });
   const idx = Math.floor(Math.random()*moleHoles.length);
   const isDecoy = Math.random() < 0.35;
   const h = moleHoles[idx];
   h.dataset.decoy = isDecoy ? '1':'0';
+  if(isDecoy) h.classList.add('decoy');
   h.classList.add('up');
   setTimeout(()=>{ if(moleRunning) popMole(); }, 550 + Math.random()*300);
 }
