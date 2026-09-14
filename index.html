@@ -509,7 +509,7 @@ function popMole(){
   if(!moleRunning) return;
   moleHoles.forEach(h=>{ h.classList.remove('up'); h.classList.remove('decoy'); });
   const idx = Math.floor(Math.random()*moleHoles.length);
-  const isDecoy = Math.random() < 0.35;
+  const isDecoy = Math.random() < 0.275;
   const h = moleHoles[idx];
   h.dataset.decoy = isDecoy ? '1':'0';
   if(isDecoy) h.classList.add('decoy');
