@@ -64,7 +64,11 @@ button:disabled{opacity:.4;cursor:not-allowed;}
 @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
 #timerOverlay .clock{font-size:3rem;font-weight:900;color:var(--accent);margin-top:20px;text-shadow:0 0 20px var(--accent);}
 #timerOverlay .msg{color:#fff;margin-top:10px;font-size:1.2rem;text-align:center;}
-#dashCanvas,#trollCanvas{background-color:#0d0f14;background-repeat:repeat;background-size:64px 64px;border-radius:16px;display:block;touch-action:none;width:min(800px,92vw);height:auto;max-height:62vh;}
+#dashCanvas{background-color:#0d0f14;background-repeat:repeat;background-size:64px 64px;border-radius:16px;display:block;touch-action:none;width:min(800px,92vw);height:auto;max-height:62vh;}
+#reactionArea{width:min(46vw,240px);height:min(46vw,240px);border-radius:50%;background:var(--panel);display:flex;align-items:center;justify-content:center;cursor:pointer;margin:24px auto;border:5px solid var(--muted);overflow:hidden;position:relative;user-select:none;transition:border-color .1s;}
+#reactionArea.go{border-color:var(--accent2);box-shadow:0 0 30px var(--accent2);}
+#reactionArea img{width:100%;height:100%;object-fit:cover;visibility:hidden;}
+#reactionStatus{font-size:1.6rem;font-weight:900;margin-top:6px;}
 #gameOverBox,#winBox{background:var(--panel);border-radius:20px;padding:30px;text-align:center;max-width:500px;}
 .face-small{width:56px;height:56px;border-radius:50%;object-fit:cover;vertical-align:middle;margin:0 4px;}
 #hideSeekGrid{display:grid;gap:6px;}
@@ -116,7 +120,7 @@ button:disabled{opacity:.4;cursor:not-allowed;}
   </div>
 
   <div class="screen" id="screen-mole">
-    <div class="hud"><span>스테이지 3 · 준혁잡기</span><span>남은시간 <span id="moleTimer">19.0</span>초</span></div>
+    <div class="hud"><span>스테이지 3 · 준혁잡기</span></div>
     <h2>목표: 준혁이 15마리 잡기!<br><span class="small">진짜 준혁이만 클릭 · 가짜(❌ 빨간배경)를 누르면 감점</span></h2>
     <div style="font-size:2.2rem;font-weight:900;margin:6px 0 16px;" id="moleScoreBig">0 / 15</div>
     <div id="moleGrid"></div>
@@ -134,10 +138,13 @@ button:disabled{opacity:.4;cursor:not-allowed;}
     <p class="small">마우스/터치로 좌우 이동해서 준혁이들을 피하세요! 30초 생존!</p>
   </div>
 
-  <div class="screen" id="screen-troll">
-    <div class="hud"><span>스테이지 6 · 트롤런</span><span id="trollProgress">장애물 0 / 20</span></div>
-    <canvas id="trollCanvas" width="800" height="400"></canvas>
-    <p class="small" id="trollMsg">스페이스바 / 클릭 / 화면 터치로 점프! (조작이 가끔 배신할 수 있음 ㅋㅋ)</p>
+  <div class="screen" id="screen-reaction">
+    <div class="hud"><span>스테이지 6 · 반응속도</span><span id="reactionProgress">라운드 0 / 5</span></div>
+    <h2>대기 중엔 누르지 말고, <b>사진이 뜨는 순간</b>만 빠르게 클릭하세요!</h2>
+    <div id="reactionArea" onclick="reactionClick()">
+      <img id="reactionImg" src="" alt="">
+    </div>
+    <div id="reactionStatus">대기...</div>
   </div>
 
   <div class="screen" id="screen-memory">
@@ -206,7 +213,7 @@ function saveCleared(n){
 }
 function goLobby(){
   stopDash(); stopMole(); stopRain();
-  if(typeof stopTroll==='function') stopTroll();
+  if(typeof stopReaction==='function') stopReaction();
   if(typeof clickerInterval!=='undefined') clearInterval(clickerInterval);
   clickerRunning = false;
   memPlaying = true;
@@ -287,7 +294,7 @@ function doPenaltyEscape(){
 })();
 
 /* ---------------- 로비 ---------------- */
-const STAGE_NAMES = ["퀴즈","준혁런","준혁잡기","다른 준혁 찾기","준혁 폭우","트롤런","준혁 기억력","준혁 클리커"];
+const STAGE_NAMES = ["퀴즈","준혁런","준혁잡기","다른 준혁 찾기","준혁 폭우","반응속도","준혁 기억력","준혁 클리커"];
 function renderStageGrid(){
   const grid = document.getElementById('stageGrid');
   grid.innerHTML = '';
@@ -306,7 +313,7 @@ function startStage(n){
   else if(n===3) startMole();
   else if(n===4) startHideSeek();
   else if(n===5) startRain();
-  else if(n===6) startTroll();
+  else if(n===6) startReaction();
   else if(n===7) startMemory();
   else if(n===8) startClicker();
 }
@@ -517,12 +524,11 @@ function dashLoop(){
 }
 
 /* ---------------- 스테이지 3: 준혁잡기(두더지) ---------------- */
-let moleInterval, moleTimeLeft, moleScore, moleRunning, moleHoles, molePopTimer;
+let moleScore, moleRunning, moleHoles, molePopTimer;
 function startMole(){
   show('screen-mole');
-  moleScore = 0; moleTimeLeft = 19.0; moleRunning = true;
+  moleScore = 0; moleRunning = true;
   document.getElementById('moleScoreBig').textContent = '0 / 15';
-  document.getElementById('moleTimer').textContent = '19.0';
   const grid = document.getElementById('moleGrid');
   grid.innerHTML='';
   moleHoles = [];
@@ -540,10 +546,9 @@ function startMole(){
     grid.appendChild(h);
     moleHoles.push(h);
   }
-  moleInterval = setInterval(moleTick, 100);
   popMole();
 }
-function stopMole(){ moleRunning=false; clearInterval(moleInterval); clearTimeout(molePopTimer); }
+function stopMole(){ moleRunning=false; clearTimeout(molePopTimer); }
 function popMole(){
   if(!moleRunning) return;
   clearTimeout(molePopTimer);
@@ -575,14 +580,6 @@ function moleClick(i){
     return;
   }
   popMole();
-}
-function moleTick(){
-  moleTimeLeft -= 0.1;
-  document.getElementById('moleTimer').textContent = Math.max(0,moleTimeLeft).toFixed(1);
-  if(moleTimeLeft <= 0){
-    stopMole();
-    jumpscare(1200, ()=>{ goLobby(); });
-  }
 }
 
 /* ---------------- 스테이지 4: 다른 준혁 찾기 ---------------- */
@@ -730,126 +727,76 @@ function rainLoop(ts){
   rainAnim = requestAnimationFrame(rainLoop);
 }
 
-/* ---------------- 스테이지 6: 트롤런 (빡치는 장애물 트롤맵) ---------------- */
-let trollCtx, trollAnim, trollPlayer, trollObstacles, trollSpeed, trollScore, trollRunning, trollImgEl;
-let trollInvertUntil = 0, trollInvertArmed = false, trollFakeWinShown = false;
-function initTrollImg(){ trollImgEl = new Image(); trollImgEl.src = IMG_MAIN; }
-initTrollImg();
-function startTroll(){
-  show('screen-troll');
-  const cvs = document.getElementById('trollCanvas');
-  cvs.style.backgroundImage = `url(${IMG_MAIN})`;
-  trollCtx = cvs.getContext('2d');
-  trollPlayer = {x:80, y:316, w:44, h:44, vy:0, onGround:true};
-  trollObstacles = [];
-  trollSpeed = 6.8;
-  trollScore = 0;
-  trollRunning = true;
-  trollInvertUntil = 0; trollInvertArmed = false; trollFakeWinShown = false;
-  document.getElementById('trollProgress').textContent = `장애물 0 / 20`;
-  document.getElementById('trollMsg').textContent = '스페이스바 / 클릭 / 화면 터치로 점프! (조작이 가끔 배신할 수 있음 ㅋㅋ)';
-  let x = 900;
-  for(let i=0;i<20;i++){
-    trollObstacles.push({x, y:360-34, w:32, h:34, passed:false});
-    x += 160 + Math.random()*180;
-  }
-  window.addEventListener('keydown', trollKeyHandler);
-  cvs.addEventListener('mousedown', trollJump);
-  cvs.addEventListener('touchstart', trollJump);
-  trollLoop();
+/* ---------------- 스테이지 6: 반응속도 ---------------- */
+const REACTION_TARGET = 5;
+let reactionRound, reactionRunning, reactionState, reactionGoTime, reactionTimeout, reactionMissTimeout;
+function startReaction(){
+  show('screen-reaction');
+  reactionRound = 0;
+  reactionRunning = true;
+  document.getElementById('reactionProgress').textContent = `라운드 0 / ${REACTION_TARGET}`;
+  nextReactionRound();
 }
-function stopTroll(){
-  trollRunning = false;
-  cancelAnimationFrame(trollAnim);
-  window.removeEventListener('keydown', trollKeyHandler);
+function stopReaction(){
+  reactionRunning = false;
+  reactionState = 'idle';
+  clearTimeout(reactionTimeout);
+  clearTimeout(reactionMissTimeout);
+  document.getElementById('reactionArea').classList.remove('go');
 }
-function trollKeyHandler(e){ if(e.code==='Space'){ e.preventDefault(); trollJump(); } }
-function trollJump(){
-  const now = Date.now();
-  if(now < trollInvertUntil){
-    if(!trollInvertArmed){ trollInvertArmed = true; return; }
-  }
-  if(trollPlayer.onGround){ trollPlayer.vy = -13.5; trollPlayer.onGround = false; }
+function nextReactionRound(){
+  if(!reactionRunning) return;
+  reactionState = 'waiting';
+  const area = document.getElementById('reactionArea');
+  const img = document.getElementById('reactionImg');
+  area.classList.remove('go');
+  img.style.visibility = 'hidden';
+  document.getElementById('reactionStatus').textContent = '대기...';
+  const delay = 1000 + Math.random()*2500;
+  reactionTimeout = setTimeout(()=>{
+    if(!reactionRunning) return;
+    reactionState = 'go';
+    reactionGoTime = Date.now();
+    img.src = IMG_MAIN;
+    img.style.visibility = 'visible';
+    area.classList.add('go');
+    document.getElementById('reactionStatus').textContent = '지금 클릭!';
+    reactionMissTimeout = setTimeout(()=>{
+      if(reactionState === 'go') failReaction();
+    }, 700);
+  }, delay);
 }
-function trollLoop(){
-  if(!trollRunning) return;
-  const cvs = document.getElementById('trollCanvas');
-  const ctx = trollCtx;
-  ctx.clearRect(0,0,cvs.width,cvs.height);
-  ctx.fillStyle = 'rgba(20,5,10,.62)';
-  ctx.fillRect(0,0,cvs.width,cvs.height);
-  ctx.fillStyle = '#2a2f3d';
-  ctx.fillRect(0,360,800,40);
-  ctx.strokeStyle='#4a5060'; ctx.beginPath(); ctx.moveTo(0,360); ctx.lineTo(800,360); ctx.stroke();
-
-  if(Date.now() < trollInvertUntil){
-    ctx.fillStyle='#ff5470'; ctx.font='bold 18px sans-serif';
-    ctx.fillText('조작 배신 중... 점프 두 번 눌러야 함 ㅋㅋ', 20, 30);
-  } else if(Math.random() < 0.0025 && trollScore>2){
-    trollInvertUntil = Date.now() + 2200; trollInvertArmed = false;
+function reactionClick(){
+  if(!reactionRunning) return;
+  if(reactionState === 'waiting'){
+    failReaction();
+    return;
   }
-
-  trollPlayer.vy += 0.75;
-  trollPlayer.y += trollPlayer.vy;
-  if(trollPlayer.y >= 316){ trollPlayer.y = 316; trollPlayer.vy = 0; trollPlayer.onGround = true; }
-
-  ctx.save();
-  ctx.beginPath();
-  ctx.rect(trollPlayer.x, trollPlayer.y, trollPlayer.w, trollPlayer.h);
-  ctx.clip();
-  if(trollImgEl.complete) ctx.drawImage(trollImgEl, trollPlayer.x, trollPlayer.y, trollPlayer.w, trollPlayer.h);
-  ctx.restore();
-  ctx.strokeStyle='#ff5470'; ctx.lineWidth=2; ctx.strokeRect(trollPlayer.x, trollPlayer.y, trollPlayer.w, trollPlayer.h);
-
-  let hit = false;
-  trollObstacles.forEach(ob=>{
-    ob.x -= trollSpeed;
-    ctx.save();
-    ctx.beginPath();
-    ctx.moveTo(ob.x, ob.y+ob.h);
-    ctx.lineTo(ob.x+ob.w/2, ob.y);
-    ctx.lineTo(ob.x+ob.w, ob.y+ob.h);
-    ctx.closePath();
-    ctx.clip();
-    if(trollImgEl.complete) ctx.drawImage(trollImgEl, ob.x, ob.y, ob.w, ob.h);
-    ctx.restore();
-    ctx.strokeStyle='#ffcc00'; ctx.lineWidth=1.5;
-    ctx.beginPath();
-    ctx.moveTo(ob.x, ob.y+ob.h);
-    ctx.lineTo(ob.x+ob.w/2, ob.y);
-    ctx.lineTo(ob.x+ob.w, ob.y+ob.h);
-    ctx.closePath();
-    ctx.stroke();
-
-    if(!ob.passed && ob.x + ob.w < trollPlayer.x){
-      ob.passed = true;
-      trollScore++;
-      document.getElementById('trollProgress').textContent = `장애물 ${trollScore} / 20`;
-      if(trollScore === 15 && !trollFakeWinShown){
-        trollFakeWinShown = true;
-        document.getElementById('trollMsg').textContent = '🎉 축하합니다 클리어!! ...는 개뿔, 5개 더 남았습니다 ㅋㅋ';
-      }
+  if(reactionState === 'go'){
+    clearTimeout(reactionMissTimeout);
+    const rt = Date.now() - reactionGoTime;
+    reactionState = 'idle';
+    document.getElementById('reactionArea').classList.remove('go');
+    reactionRound++;
+    document.getElementById('reactionProgress').textContent = `라운드 ${reactionRound} / ${REACTION_TARGET}`;
+    document.getElementById('reactionStatus').textContent = `${rt}ms!`;
+    if(reactionRound >= REACTION_TARGET){
+      reactionRunning = false;
+      saveCleared(6);
+      show('screen-win');
+      document.getElementById('winMsg').textContent = "스테이지 6(반응속도) 클리어! 반사신경 인정!";
+    } else {
+      setTimeout(nextReactionRound, 700);
     }
-    const px1=trollPlayer.x+5, px2=trollPlayer.x+trollPlayer.w-5, py1=trollPlayer.y+5, py2=trollPlayer.y+trollPlayer.h-5;
-    const ox1=ob.x+5, ox2=ob.x+ob.w-5, oy1=ob.y+6, oy2=ob.y+ob.h;
-    if(px1<ox2 && px2>ox1 && py1<oy2 && py2>oy1){ hit = true; }
+  }
+}
+function failReaction(){
+  reactionRunning = false;
+  clearTimeout(reactionTimeout);
+  clearTimeout(reactionMissTimeout);
+  jumpscare(700, ()=>{
+    penaltyTimer3min(()=>{ goLobby(); });
   });
-
-  if(trollScore >= 20){
-    stopTroll();
-    saveCleared(6);
-    show('screen-win');
-    document.getElementById('winMsg').textContent = "스테이지 6(트롤런) 클리어! 빡친 만큼 강해졌다!";
-    return;
-  }
-  if(hit){
-    stopTroll();
-    jumpscare(700, ()=>{
-      penaltyTimer3min(()=>{ goLobby(); }, 90);
-    });
-    return;
-  }
-  trollAnim = requestAnimationFrame(trollLoop);
 }
 
 /* ---------------- 스테이지 7: 준혁 기억력 ---------------- */
