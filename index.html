@@ -140,7 +140,7 @@ button:disabled{opacity:.4;cursor:not-allowed;}
 
   <div class="screen" id="screen-reaction">
     <div class="hud"><span>스테이지 6 · 반응속도</span><span id="reactionProgress">라운드 0 / 5</span></div>
-    <h2>대기 중엔 누르지 말고, <b>사진이 뜨는 순간</b>만 빠르게 클릭하세요!</h2>
+    <h2>대기 중엔 누르지 말고, 사진이 뜨는 순간 <b>0.4초 안에</b> 클릭하세요!</h2>
     <div id="reactionArea" onclick="reactionClick()">
       <img id="reactionImg" src="" alt="">
     </div>
@@ -729,6 +729,7 @@ function rainLoop(ts){
 
 /* ---------------- 스테이지 6: 반응속도 ---------------- */
 const REACTION_TARGET = 5;
+const REACTION_LIMIT_MS = 400;
 let reactionRound, reactionRunning, reactionState, reactionGoTime, reactionTimeout, reactionMissTimeout;
 function startReaction(){
   show('screen-reaction');
@@ -775,6 +776,11 @@ function reactionClick(){
   if(reactionState === 'go'){
     clearTimeout(reactionMissTimeout);
     const rt = Date.now() - reactionGoTime;
+    if(rt > REACTION_LIMIT_MS){
+      reactionState = 'idle';
+      failReaction();
+      return;
+    }
     reactionState = 'idle';
     document.getElementById('reactionArea').classList.remove('go');
     reactionRound++;

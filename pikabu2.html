@@ -118,7 +118,7 @@ button:disabled{opacity:.4;cursor:not-allowed;}
   </div>
 
   <div class="screen" id="screen-mole">
-    <div class="hud"><span>스테이지 3 · 예율잡기</span><span>남은시간 <span id="moleTimer">19.0</span>초</span></div>
+    <div class="hud"><span>스테이지 3 · 예율잡기</span></div>
     <h2>목표: 예율이 15마리 잡기!<br><span class="small">진짜 예율이만 클릭 · 가짜(❌ 빨간배경)를 누르면 감점</span></h2>
     <div style="font-size:2.2rem;font-weight:900;margin:6px 0 16px;" id="moleScoreBig">0 / 15</div>
     <div id="moleGrid"></div>
@@ -138,7 +138,7 @@ button:disabled{opacity:.4;cursor:not-allowed;}
 
   <div class="screen" id="screen-reaction">
     <div class="hud"><span>스테이지 6 · 반응속도</span><span id="reactionProgress">라운드 0 / 5</span></div>
-    <h2>대기 중엔 누르지 말고, <b>사진이 뜨는 순간</b>만 빠르게 클릭하세요!</h2>
+    <h2>대기 중엔 누르지 말고, 사진이 뜨는 순간 <b>0.4초 안에</b> 클릭하세요!</h2>
     <div id="reactionArea" onclick="reactionClick()">
       <img id="reactionImg" src="" alt="">
     </div>
@@ -538,13 +538,12 @@ function dashLoop(){
 }
 
 /* ---------------- 스테이지 3: 예율잡기(두더지) ---------------- */
-let moleInterval, moleTimeLeft, moleScore, moleRunning, moleHoles, molePopTimer;
+let moleScore, moleRunning, moleHoles, molePopTimer;
 function startMole(){
   show('screen-mole');
   const img = randomMain();
-  moleScore = 0; moleTimeLeft = 19.0; moleRunning = true;
+  moleScore = 0; moleRunning = true;
   document.getElementById('moleScoreBig').textContent = '0 / 15';
-  document.getElementById('moleTimer').textContent = '19.0';
   const grid = document.getElementById('moleGrid');
   grid.innerHTML='';
   moleHoles = [];
@@ -562,10 +561,9 @@ function startMole(){
     grid.appendChild(h);
     moleHoles.push(h);
   }
-  moleInterval = setInterval(moleTick, 100);
   popMole();
 }
-function stopMole(){ moleRunning=false; clearInterval(moleInterval); clearTimeout(molePopTimer); }
+function stopMole(){ moleRunning=false; clearTimeout(molePopTimer); }
 function popMole(){
   if(!moleRunning) return;
   clearTimeout(molePopTimer);
@@ -597,14 +595,6 @@ function moleClick(i){
     return;
   }
   popMole();
-}
-function moleTick(){
-  moleTimeLeft -= 0.1;
-  document.getElementById('moleTimer').textContent = Math.max(0,moleTimeLeft).toFixed(1);
-  if(moleTimeLeft <= 0){
-    stopMole();
-    jumpscare(1200, ()=>{ goLobby(); });
-  }
 }
 
 /* ---------------- 스테이지 4: 다른 예율 찾기 ---------------- */
@@ -751,6 +741,7 @@ function rainLoop(ts){
 
 /* ---------------- 스테이지 6: 반응속도 ---------------- */
 const REACTION_TARGET = 5;
+const REACTION_LIMIT_MS = 400;
 let reactionRound, reactionRunning, reactionState, reactionGoTime, reactionTimeout, reactionMissTimeout;
 function startReaction(){
   show('screen-reaction');
@@ -797,6 +788,11 @@ function reactionClick(){
   if(reactionState === 'go'){
     clearTimeout(reactionMissTimeout);
     const rt = Date.now() - reactionGoTime;
+    if(rt > REACTION_LIMIT_MS){
+      reactionState = 'idle';
+      failReaction();
+      return;
+    }
     reactionState = 'idle';
     document.getElementById('reactionArea').classList.remove('go');
     reactionRound++;
