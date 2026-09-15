@@ -32,6 +32,10 @@ button:disabled{opacity:.4;cursor:not-allowed;}
 .stagebtn.locked{opacity:.35;cursor:not-allowed;border-color:var(--muted);}
 .stagebtn .num{font-size:2rem;display:block;}
 .stagebtn.cleared{border-color:var(--accent2);}
+#pikabu2Btn{position:absolute;right:18px;bottom:18px;z-index:6;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;animation:p2pulse 1.6s ease-in-out infinite;}
+#pikabu2Btn img{width:64px;height:64px;border-radius:50%;object-fit:cover;border:3px solid var(--accent2);box-shadow:0 0 16px var(--accent2);}
+#pikabu2Btn span{font-size:.75rem;font-weight:800;background:var(--panel);padding:3px 8px;border-radius:8px;color:var(--accent2);}
+@keyframes p2pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
 #lobbyPhotos{position:absolute;inset:0;pointer-events:none;}
 .lobbyImg{position:absolute;border-radius:50%;object-fit:cover;box-shadow:0 0 20px rgba(0,0,0,.5);opacity:.9;}
 .hud{position:absolute;top:14px;left:14px;right:14px;display:flex;justify-content:space-between;font-weight:700;z-index:5;}
@@ -60,7 +64,7 @@ button:disabled{opacity:.4;cursor:not-allowed;}
 @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
 #timerOverlay .clock{font-size:3rem;font-weight:900;color:var(--accent);margin-top:20px;text-shadow:0 0 20px var(--accent);}
 #timerOverlay .msg{color:#fff;margin-top:10px;font-size:1.2rem;text-align:center;}
-#dashCanvas{background-color:#0d0f14;background-repeat:repeat;background-size:64px 64px;border-radius:16px;display:block;touch-action:none;width:min(800px,92vw);height:auto;max-height:62vh;}
+#dashCanvas,#trollCanvas{background-color:#0d0f14;background-repeat:repeat;background-size:64px 64px;border-radius:16px;display:block;touch-action:none;width:min(800px,92vw);height:auto;max-height:62vh;}
 #gameOverBox,#winBox{background:var(--panel);border-radius:20px;padding:30px;text-align:center;max-width:500px;}
 .face-small{width:56px;height:56px;border-radius:50%;object-fit:cover;vertical-align:middle;margin:0 4px;}
 #hideSeekGrid{display:grid;gap:6px;}
@@ -68,7 +72,10 @@ button:disabled{opacity:.4;cursor:not-allowed;}
 .hsItem img{width:100%;height:100%;object-fit:cover;display:block;}
 .hsItem.wrongPick{border-color:var(--accent);animation:shake .3s;}
 @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
-#moleGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;width:min(90vw,480px);}
+#moleGrid,#memoryGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;width:min(90vw,480px);}
+.memTile{aspect-ratio:1;border-radius:50%;overflow:hidden;cursor:pointer;position:relative;filter:brightness(0.35) saturate(0.6);transition:filter .15s, transform .15s;}
+.memTile img{width:100%;height:100%;object-fit:cover;display:block;}
+.memTile.lit{filter:brightness(1.3) saturate(1.3);transform:scale(1.06);box-shadow:0 0 24px var(--accent);}
 .hole{aspect-ratio:1;background:#2a2f3d;border-radius:50%;display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;position:relative;}
 .hole img{width:100%;height:100%;object-fit:cover;border-radius:50%;transform:translateY(100%);transition:transform .15s;}
 .hole.up img{transform:translateY(0);}
@@ -86,6 +93,10 @@ button:disabled{opacity:.4;cursor:not-allowed;}
     <div id="lobbyPhotos"></div>
     <div style="position:relative;z-index:2;text-align:center;">
       <div class="stagegrid" id="stageGrid"></div>
+    </div>
+    <div id="pikabu2Btn" title="피카부2 입장" onclick="location.href='pikabu2.html'">
+      <img id="pikabu2BtnImg" src="" alt="피카부2 입장">
+      <span>피카부2</span>
     </div>
   </div>
 
@@ -121,6 +132,25 @@ button:disabled{opacity:.4;cursor:not-allowed;}
     <div class="hud"><span>스테이지 5 · 준혁 폭우</span><span id="rainLives">❤❤❤</span></div>
     <canvas id="rainCanvas" width="800" height="450"></canvas>
     <p class="small">마우스/터치로 좌우 이동해서 준혁이들을 피하세요! 30초 생존!</p>
+  </div>
+
+  <div class="screen" id="screen-troll">
+    <div class="hud"><span>스테이지 6 · 트롤런</span><span id="trollProgress">장애물 0 / 20</span></div>
+    <canvas id="trollCanvas" width="800" height="400"></canvas>
+    <p class="small" id="trollMsg">스페이스바 / 클릭 / 화면 터치로 점프! (조작이 가끔 배신할 수 있음 ㅋㅋ)</p>
+  </div>
+
+  <div class="screen" id="screen-memory">
+    <div class="hud"><span>스테이지 7 · 준혁 기억력</span><span id="memProgress">라운드 1 / 6</span></div>
+    <h2 id="memStatus">준혁이가 빛나는 순서를 잘 기억하세요!</h2>
+    <div id="memoryGrid"></div>
+  </div>
+
+  <div class="screen" id="screen-clicker">
+    <div class="hud"><span>스테이지 8 · 준혁 클리커</span><span>남은시간 <span id="clickerTimer">8.0</span>초</span></div>
+    <h2>목표: 8초 안에 40번 클릭!</h2>
+    <div style="font-size:2.2rem;font-weight:900;margin:6px 0 16px;" id="clickerCount">0 / 40</div>
+    <img id="clickerImg" src="" alt="" style="width:180px;height:180px;border-radius:50%;object-fit:cover;cursor:pointer;user-select:none;box-shadow:0 0 30px var(--accent);">
   </div>
 
   <div class="screen" id="screen-gameover">
@@ -174,6 +204,10 @@ function saveCleared(n){
 }
 function goLobby(){
   stopDash(); stopMole(); stopRain();
+  if(typeof stopTroll==='function') stopTroll();
+  if(typeof clickerInterval!=='undefined') clearInterval(clickerInterval);
+  clickerRunning = false;
+  memPlaying = true;
   renderStageGrid();
   show('screen-lobby');
 }
@@ -188,11 +222,11 @@ function jumpscare(afterMs, cb){
 }
 
 let penaltyEscape = null;
-function penaltyTimer3min(cb){
+function penaltyTimer3min(cb, totalSecs){
   const el = document.getElementById('timerOverlay');
   document.getElementById('timerImg').src = IMG_MAIN;
   el.classList.add('active');
-  let secs = 180;
+  let secs = totalSecs || 180;
   const clock = document.getElementById('timerClock');
   function fmt(s){ const m=Math.floor(s/60); const r=s%60; return m+":"+String(r).padStart(2,'0'); }
   clock.textContent = fmt(secs);
@@ -251,11 +285,11 @@ function doPenaltyEscape(){
 })();
 
 /* ---------------- 로비 ---------------- */
-const STAGE_NAMES = ["퀴즈","준혁런","준혁잡기","다른 준혁 찾기","준혁 폭우"];
+const STAGE_NAMES = ["퀴즈","준혁런","준혁잡기","다른 준혁 찾기","준혁 폭우","트롤런","준혁 기억력","준혁 클리커"];
 function renderStageGrid(){
   const grid = document.getElementById('stageGrid');
   grid.innerHTML = '';
-  for(let i=1;i<=5;i++){
+  for(let i=1;i<=8;i++){
     const unlocked = i===1 || cleared.includes(i-1);
     const btn = document.createElement('div');
     btn.className = 'stagebtn' + (unlocked?'':' locked') + (cleared.includes(i)?' cleared':'');
@@ -270,6 +304,9 @@ function startStage(n){
   else if(n===3) startMole();
   else if(n===4) startHideSeek();
   else if(n===5) startRain();
+  else if(n===6) startTroll();
+  else if(n===7) startMemory();
+  else if(n===8) startClicker();
 }
 
 function setupLobbyPhotos(){
@@ -478,7 +515,7 @@ function dashLoop(){
 }
 
 /* ---------------- 스테이지 3: 준혁잡기(두더지) ---------------- */
-let moleInterval, moleTimeLeft, moleScore, moleRunning, moleHoles;
+let moleInterval, moleTimeLeft, moleScore, moleRunning, moleHoles, molePopTimer;
 function startMole(){
   show('screen-mole');
   moleScore = 0; moleTimeLeft = 19.0; moleRunning = true;
@@ -504,9 +541,10 @@ function startMole(){
   moleInterval = setInterval(moleTick, 100);
   popMole();
 }
-function stopMole(){ moleRunning=false; clearInterval(moleInterval); }
+function stopMole(){ moleRunning=false; clearInterval(moleInterval); clearTimeout(molePopTimer); }
 function popMole(){
   if(!moleRunning) return;
+  clearTimeout(molePopTimer);
   moleHoles.forEach(h=>{ h.classList.remove('up'); h.classList.remove('decoy'); });
   const idx = Math.floor(Math.random()*moleHoles.length);
   const isDecoy = Math.random() < 0.275;
@@ -514,7 +552,7 @@ function popMole(){
   h.dataset.decoy = isDecoy ? '1':'0';
   if(isDecoy) h.classList.add('decoy');
   h.classList.add('up');
-  setTimeout(()=>{ if(moleRunning) popMole(); }, 550 + Math.random()*300);
+  molePopTimer = setTimeout(()=>{ if(moleRunning) popMole(); }, 550 + Math.random()*300);
 }
 function moleClick(i){
   if(!moleRunning) return;
@@ -532,7 +570,9 @@ function moleClick(i){
     saveCleared(3);
     show('screen-win');
     document.getElementById('winMsg').textContent = "스테이지 3(준혁잡기) 클리어! 준혁이 15마리 포획!";
+    return;
   }
+  popMole();
 }
 function moleTick(){
   moleTimeLeft -= 0.1;
@@ -686,6 +726,227 @@ function rainLoop(ts){
     return;
   }
   rainAnim = requestAnimationFrame(rainLoop);
+}
+
+/* ---------------- 스테이지 6: 트롤런 (빡치는 장애물 트롤맵) ---------------- */
+let trollCtx, trollAnim, trollPlayer, trollObstacles, trollSpeed, trollScore, trollRunning, trollImgEl;
+let trollInvertUntil = 0, trollInvertArmed = false, trollFakeWinShown = false;
+function initTrollImg(){ trollImgEl = new Image(); trollImgEl.src = IMG_MAIN; }
+initTrollImg();
+function startTroll(){
+  show('screen-troll');
+  const cvs = document.getElementById('trollCanvas');
+  cvs.style.backgroundImage = `url(${IMG_MAIN})`;
+  trollCtx = cvs.getContext('2d');
+  trollPlayer = {x:80, y:316, w:44, h:44, vy:0, onGround:true};
+  trollObstacles = [];
+  trollSpeed = 6.8;
+  trollScore = 0;
+  trollRunning = true;
+  trollInvertUntil = 0; trollInvertArmed = false; trollFakeWinShown = false;
+  document.getElementById('trollProgress').textContent = `장애물 0 / 20`;
+  document.getElementById('trollMsg').textContent = '스페이스바 / 클릭 / 화면 터치로 점프! (조작이 가끔 배신할 수 있음 ㅋㅋ)';
+  let x = 900;
+  for(let i=0;i<20;i++){
+    trollObstacles.push({x, y:360-34, w:32, h:34, passed:false});
+    x += 160 + Math.random()*180;
+  }
+  window.addEventListener('keydown', trollKeyHandler);
+  cvs.addEventListener('mousedown', trollJump);
+  cvs.addEventListener('touchstart', trollJump);
+  trollLoop();
+}
+function stopTroll(){
+  trollRunning = false;
+  cancelAnimationFrame(trollAnim);
+  window.removeEventListener('keydown', trollKeyHandler);
+}
+function trollKeyHandler(e){ if(e.code==='Space'){ e.preventDefault(); trollJump(); } }
+function trollJump(){
+  const now = Date.now();
+  if(now < trollInvertUntil){
+    if(!trollInvertArmed){ trollInvertArmed = true; return; }
+  }
+  if(trollPlayer.onGround){ trollPlayer.vy = -13.5; trollPlayer.onGround = false; }
+}
+function trollLoop(){
+  if(!trollRunning) return;
+  const cvs = document.getElementById('trollCanvas');
+  const ctx = trollCtx;
+  ctx.clearRect(0,0,cvs.width,cvs.height);
+  ctx.fillStyle = 'rgba(20,5,10,.62)';
+  ctx.fillRect(0,0,cvs.width,cvs.height);
+  ctx.fillStyle = '#2a2f3d';
+  ctx.fillRect(0,360,800,40);
+  ctx.strokeStyle='#4a5060'; ctx.beginPath(); ctx.moveTo(0,360); ctx.lineTo(800,360); ctx.stroke();
+
+  if(Date.now() < trollInvertUntil){
+    ctx.fillStyle='#ff5470'; ctx.font='bold 18px sans-serif';
+    ctx.fillText('조작 배신 중... 점프 두 번 눌러야 함 ㅋㅋ', 20, 30);
+  } else if(Math.random() < 0.0025 && trollScore>2){
+    trollInvertUntil = Date.now() + 2200; trollInvertArmed = false;
+  }
+
+  trollPlayer.vy += 0.75;
+  trollPlayer.y += trollPlayer.vy;
+  if(trollPlayer.y >= 316){ trollPlayer.y = 316; trollPlayer.vy = 0; trollPlayer.onGround = true; }
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(trollPlayer.x, trollPlayer.y, trollPlayer.w, trollPlayer.h);
+  ctx.clip();
+  if(trollImgEl.complete) ctx.drawImage(trollImgEl, trollPlayer.x, trollPlayer.y, trollPlayer.w, trollPlayer.h);
+  ctx.restore();
+  ctx.strokeStyle='#ff5470'; ctx.lineWidth=2; ctx.strokeRect(trollPlayer.x, trollPlayer.y, trollPlayer.w, trollPlayer.h);
+
+  let hit = false;
+  trollObstacles.forEach(ob=>{
+    ob.x -= trollSpeed;
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(ob.x, ob.y+ob.h);
+    ctx.lineTo(ob.x+ob.w/2, ob.y);
+    ctx.lineTo(ob.x+ob.w, ob.y+ob.h);
+    ctx.closePath();
+    ctx.clip();
+    if(trollImgEl.complete) ctx.drawImage(trollImgEl, ob.x, ob.y, ob.w, ob.h);
+    ctx.restore();
+    ctx.strokeStyle='#ffcc00'; ctx.lineWidth=1.5;
+    ctx.beginPath();
+    ctx.moveTo(ob.x, ob.y+ob.h);
+    ctx.lineTo(ob.x+ob.w/2, ob.y);
+    ctx.lineTo(ob.x+ob.w, ob.y+ob.h);
+    ctx.closePath();
+    ctx.stroke();
+
+    if(!ob.passed && ob.x + ob.w < trollPlayer.x){
+      ob.passed = true;
+      trollScore++;
+      document.getElementById('trollProgress').textContent = `장애물 ${trollScore} / 20`;
+      if(trollScore === 15 && !trollFakeWinShown){
+        trollFakeWinShown = true;
+        document.getElementById('trollMsg').textContent = '🎉 축하합니다 클리어!! ...는 개뿔, 5개 더 남았습니다 ㅋㅋ';
+      }
+    }
+    const px1=trollPlayer.x+5, px2=trollPlayer.x+trollPlayer.w-5, py1=trollPlayer.y+5, py2=trollPlayer.y+trollPlayer.h-5;
+    const ox1=ob.x+5, ox2=ob.x+ob.w-5, oy1=ob.y+6, oy2=ob.y+ob.h;
+    if(px1<ox2 && px2>ox1 && py1<oy2 && py2>oy1){ hit = true; }
+  });
+
+  if(trollScore >= 20){
+    stopTroll();
+    saveCleared(6);
+    show('screen-win');
+    document.getElementById('winMsg').textContent = "스테이지 6(트롤런) 클리어! 빡친 만큼 강해졌다!";
+    return;
+  }
+  if(hit){
+    stopTroll();
+    jumpscare(700, ()=>{
+      penaltyTimer3min(()=>{ goLobby(); }, 90);
+    });
+    return;
+  }
+  trollAnim = requestAnimationFrame(trollLoop);
+}
+
+/* ---------------- 스테이지 7: 준혁 기억력 ---------------- */
+let memSeq, memUserIdx, memPlaying, memTiles;
+const MEM_TARGET_LEN = 8;
+function startMemory(){
+  show('screen-memory');
+  memSeq = []; memUserIdx = 0; memPlaying = false;
+  document.getElementById('memStatus').textContent = '준혁이가 빛나는 순서를 잘 기억하세요!';
+  const grid = document.getElementById('memoryGrid');
+  grid.innerHTML = '';
+  memTiles = [];
+  for(let i=0;i<8;i++){
+    const t = document.createElement('div');
+    t.className = 'memTile';
+    const img = document.createElement('img');
+    img.src = IMG_MAIN;
+    t.appendChild(img);
+    t.onclick = ()=>memTileClick(i);
+    grid.appendChild(t);
+    memTiles.push(t);
+  }
+  nextMemoryRound();
+}
+function nextMemoryRound(){
+  memSeq.push(Math.floor(Math.random()*8));
+  memUserIdx = 0;
+  document.getElementById('memProgress').textContent = `라운드 ${memSeq.length} / ${MEM_TARGET_LEN}`;
+  document.getElementById('memStatus').textContent = '순서를 잘 보세요...';
+  playMemorySequence();
+}
+function playMemorySequence(){
+  memPlaying = true;
+  let i = 0;
+  function step(){
+    if(i>0) memTiles[memSeq[i-1]].classList.remove('lit');
+    if(i >= memSeq.length){
+      memPlaying = false;
+      document.getElementById('memStatus').textContent = '이제 같은 순서로 클릭하세요!';
+      return;
+    }
+    memTiles[memSeq[i]].classList.add('lit');
+    i++;
+    setTimeout(step, 550);
+  }
+  setTimeout(step, 400);
+}
+function memTileClick(i){
+  if(memPlaying) return;
+  if(i === memSeq[memUserIdx]){
+    memTiles[i].classList.add('lit');
+    setTimeout(()=>memTiles[i].classList.remove('lit'), 200);
+    memUserIdx++;
+    if(memUserIdx >= memSeq.length){
+      if(memSeq.length >= MEM_TARGET_LEN){
+        saveCleared(7);
+        show('screen-win');
+        document.getElementById('winMsg').textContent = "스테이지 7(준혁 기억력) 클리어! 준혁이 기억력왕!";
+      } else {
+        setTimeout(nextMemoryRound, 700);
+      }
+    }
+  } else {
+    jumpscare(1200, ()=>{ goLobby(); });
+  }
+}
+
+/* ---------------- 스테이지 8: 준혁 클리커 ---------------- */
+let clickerCount, clickerTimeLeft, clickerInterval, clickerRunning;
+function startClicker(){
+  show('screen-clicker');
+  clickerCount = 0; clickerTimeLeft = 8.0; clickerRunning = true;
+  document.getElementById('clickerCount').textContent = '0 / 40';
+  document.getElementById('clickerTimer').textContent = '8.0';
+  const img = document.getElementById('clickerImg');
+  img.src = IMG_MAIN;
+  img.onclick = clickerClick;
+  clickerInterval = setInterval(clickerTick, 100);
+}
+function clickerClick(){
+  if(!clickerRunning) return;
+  clickerCount++;
+  document.getElementById('clickerCount').textContent = `${clickerCount} / 40`;
+  if(clickerCount >= 40){
+    clickerRunning = false;
+    clearInterval(clickerInterval);
+    saveCleared(8);
+    show('screen-win');
+    document.getElementById('winMsg').textContent = "스테이지 8(준혁 클리커) 클리어! 손가락 고생했다 ㅋㅋ";
+  }
+}
+function clickerTick(){
+  clickerTimeLeft -= 0.1;
+  document.getElementById('clickerTimer').textContent = Math.max(0,clickerTimeLeft).toFixed(1);
+  if(clickerTimeLeft <= 0){
+    clickerRunning = false;
+    clearInterval(clickerInterval);
+    jumpscare(1200, ()=>{ goLobby(); });
+  }
 }
 
 /* ---------------- 초기화 ---------------- */
